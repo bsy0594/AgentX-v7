@@ -74,6 +74,13 @@ CODING_RULES = """\
 MANDATORY: Use sklearn Pipeline + ColumnTransformer for ALL preprocessing.
 This avoids pandas Copy-on-Write errors entirely. Never modify DataFrames in-place.
 
+CRITICAL ANTI-LEAKAGE RULES (violating these inflates CV but destroys leaderboard score):
+- NEVER concatenate train and test before fitting any transformer or computing any statistics
+- ALWAYS fit Pipeline/ColumnTransformer on TRAIN only, then .transform() test separately
+- Any group aggregations or statistics MUST be derived from train only, then joined to test
+- For target encoding, use OOF estimates only — never fit on the full training set at once
+- Cross-validation uses training rows ONLY — test.csv has no target on the real leaderboard
+
 AVAILABLE LIBRARIES: pandas, numpy, sklearn, xgboost, lightgbm, scipy
 
 REQUIRED CODE STRUCTURE (follow exactly, replace placeholders):

@@ -209,6 +209,11 @@ Rules:
 - Output ONLY the function body inside ```python ... ``` fences. No explanation.
 - Create 10-20 high-quality features. Do NOT create more than 25 new columns.
 - Focus on features with strong predictive signal based on the correlations shown.
+
+CRITICAL ANTI-LEAKAGE RULES:
+- NEVER concatenate train and test (pd.concat) to compute statistics or fit any encoder.
+- ALL statistics (mean, median, value_counts, groupby aggregations) MUST be computed from train only, then applied to test via .map() or .fillna().
+- The fe() function must not look at test values when computing train feature statistics.
 """
 
 

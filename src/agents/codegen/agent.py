@@ -24,6 +24,13 @@ Rules:
 - Follow the DATA_DIR and SUBMISSION_PATH exactly — do NOT change them
 - Cast all categorical columns to str before encoding
 - Output ONLY raw Python code — no markdown fences, no explanations
+
+CRITICAL ANTI-LEAKAGE RULES (violating these inflates local CV but destroys leaderboard score):
+- NEVER concatenate train and test before any fitting, encoding, or statistics computation
+- ALWAYS fit all preprocessing (Pipeline, ColumnTransformer, imputers, scalers, encoders) on TRAIN only, then .transform() test separately
+- Any group statistics or aggregation features MUST be computed on train only, then mapped to test
+- For target encoding, use out-of-fold (OOF) estimates — never fit on full train at once
+- Cross-validation uses ONLY training rows — test.csv has NO target column on the leaderboard
 """
 
 
