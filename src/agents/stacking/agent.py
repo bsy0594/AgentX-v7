@@ -257,14 +257,18 @@ def _build_data_summary(train: pd.DataFrame, target_col: str, y: pd.Series) -> s
 def _call_llm(messages: list[dict]) -> str:
     """Call GPT-4o (synchronous — use via asyncio.to_thread)."""
     import openai
-    client = openai.OpenAI(api_key=_OPENAI_KEY)
-    resp = client.chat.completions.create(
-        model="gpt-4o",
-        messages=messages,
-        temperature=0.3,
-        max_tokens=4000,
-    )
-    return resp.choices[0].message.content or ""
+    try:
+        client = openai.OpenAI(api_key=_OPENAI_KEY)
+        resp = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=4000,
+        )
+        return resp.choices[0].message.content or ""
+    except Exception as e:
+        print(f"[Stacking] LLM call failed: {e} — falling back to generic FE")
+        return ""
 
 
 def _extract_and_run_fe(content: str, train: pd.DataFrame, test: pd.DataFrame, target_col: str):

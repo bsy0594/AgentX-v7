@@ -44,17 +44,21 @@ class PlannerAgent:
             new_agent_text_message("[Planner] Forming solution plan..."),
         )
 
-        resp = await self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": payload},
-            ],
-            temperature=0.3,
-            max_tokens=600,
-        )
+        try:
+            resp = await self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": payload},
+                ],
+                temperature=0.3,
+                max_tokens=600,
+            )
+            plan = resp.choices[0].message.content.strip()
+        except Exception as e:
+            await updater.failed(new_agent_text_message(f"[Planner] OpenAI call failed: {e}"))
+            return
 
-        plan = resp.choices[0].message.content.strip()
         print(f"[Planner] Plan formed ({len(plan)} chars)")
 
         await updater.update_status(

@@ -783,7 +783,7 @@ class MLAgent:
             f"CRITICAL PATH CONSTRAINT — copy these EXACTLY, do NOT change them:\n"
             f'  data_dir        = Path("{data_dir_str}")\n'
             f'  submission_path = Path("{sub_path_str}")\n'
-            f"This is a Windows machine. These are the real paths. Do NOT use /home or /tmp.\n"
+            f"These are Linux paths inside a Docker container. Use them exactly as shown.\n"
         )
         fe_section = (
             f"FEATURE ENGINEERING CODE (use this engineer() function exactly — do NOT simplify it):\n"

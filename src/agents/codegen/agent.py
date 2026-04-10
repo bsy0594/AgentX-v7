@@ -42,17 +42,21 @@ class CodeGeneratorAgent:
             new_agent_text_message("[CodeGen] Writing ML solution code..."),
         )
 
-        resp = await self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": payload},
-            ],
-            temperature=0.1,
-            max_tokens=4000,
-        )
+        try:
+            resp = await self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": payload},
+                ],
+                temperature=0.1,
+                max_tokens=4000,
+            )
+            code = resp.choices[0].message.content.strip()
+        except Exception as e:
+            await updater.failed(new_agent_text_message(f"[CodeGen] OpenAI call failed: {e}"))
+            return
 
-        code = resp.choices[0].message.content.strip()
         if code.startswith("```"):
             lines = code.splitlines()
             code  = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])

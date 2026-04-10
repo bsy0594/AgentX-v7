@@ -156,22 +156,26 @@ class ErrorHandlerAgent:
         return code, error
 
     async def _fix(self, code: str, error: str, diagnosis: str) -> str:
-        resp = await self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": (
-                    f"Fix this failing ML Python code.\n\n"
-                    f"PRE-DIAGNOSED ROOT CAUSE: {diagnosis}\n\n"
-                    f"ERROR TRACEBACK:\n{error}\n\n"
-                    f"FAILING CODE:\n{code}\n\n"
-                    f"Return ONLY the corrected Python code. No markdown. No explanations."
-                )},
-            ],
-            temperature=0.05,
-            max_tokens=3500,
-        )
-        fixed = resp.choices[0].message.content.strip()
+        try:
+            resp = await self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": (
+                        f"Fix this failing ML Python code.\n\n"
+                        f"PRE-DIAGNOSED ROOT CAUSE: {diagnosis}\n\n"
+                        f"ERROR TRACEBACK:\n{error}\n\n"
+                        f"FAILING CODE:\n{code}\n\n"
+                        f"Return ONLY the corrected Python code. No markdown. No explanations."
+                    )},
+                ],
+                temperature=0.05,
+                max_tokens=3500,
+            )
+            fixed = resp.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"[ErrorHandler] OpenAI call failed: {e} — returning original code")
+            return code
         if fixed.startswith("```"):
             lines = fixed.splitlines()
             fixed = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
