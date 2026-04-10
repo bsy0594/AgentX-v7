@@ -1071,8 +1071,6 @@ print(f"Done. {{len(sub)}} predictions saved to {{submission_path}}")
     def _run_code(self, code: str) -> tuple[bool, str]:
         code_file = self.workdir / "solution.py"
         code_file.write_text(code, encoding="utf-8")
-        attempt_n = len(list(Path(r"C:/Users/PC4/Downloads/AgentX").glob("solution_attempt_*.py"))) + 1
-        Path(f"C:/Users/PC4/Downloads/AgentX/solution_attempt_{attempt_n}.py").write_text(code, encoding="utf-8")
         try:
             result = subprocess.run(
                 [sys.executable, str(code_file)],
