@@ -1,0 +1,10 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+catboost_info/
+logs/
+*.csv
+!run_test.py
+src/evaluator/cache/
