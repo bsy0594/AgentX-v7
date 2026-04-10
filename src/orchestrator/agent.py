@@ -390,7 +390,6 @@ class MLAgent:
                 mime_type="text/csv",
             )))],
             name="submission",
-            last_chunk=True,
         )
 
     # ── EDA Agent call ────────────────────────────────────────────────────────
@@ -664,23 +663,27 @@ class MLAgent:
             print(f"[MLE] Error Handler unreachable: {e}")
 
         # Self-repair fallback (direct OpenAI call — Error Handler unreachable)
-        resp = await self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": (
-                    f"Fix this failing ML code.\n\nFAILING CODE:\n{code}\n\n"
-                    f"ERROR:\n{error[:1500]}\n\n{CODING_RULES}\n\n"
-                    f"Return ONLY corrected Python code. No markdown."
-                )},
-            ],
-            temperature=0.05, max_tokens=3500,
-        )
-        fixed = resp.choices[0].message.content.strip()
-        if fixed.startswith("```"):
-            lines = fixed.splitlines()
-            fixed = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
-        return fixed
+        try:
+            resp = await self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": (
+                        f"Fix this failing ML code.\n\nFAILING CODE:\n{code}\n\n"
+                        f"ERROR:\n{error[:1500]}\n\n{CODING_RULES}\n\n"
+                        f"Return ONLY corrected Python code. No markdown."
+                    )},
+                ],
+                temperature=0.05, max_tokens=3500,
+            )
+            fixed = resp.choices[0].message.content.strip()
+            if fixed.startswith("```"):
+                lines = fixed.splitlines()
+                fixed = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+            return fixed
+        except Exception as e:
+            print(f"[MLE] GPT fix fallback failed: {e}")
+            return code
 
     # ── Planning ──────────────────────────────────────────────────────────────
 
@@ -710,15 +713,19 @@ class MLAgent:
         except Exception as e:
             print(f"[MLE] Planner unreachable: {e} — using fallback")
         # Fallback: direct OpenAI call
-        resp = await self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": payload},
-            ],
-            temperature=0.3, max_tokens=700,
-        )
-        return resp.choices[0].message.content.strip()
+        try:
+            resp = await self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": payload},
+                ],
+                temperature=0.3, max_tokens=700,
+            )
+            return resp.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"[MLE] GPT plan fallback failed: {e}")
+            return "Use a simple LightGBM classifier with default preprocessing."
 
     # ── Critic ────────────────────────────────────────────────────────────────
 
@@ -818,15 +825,19 @@ class MLAgent:
 
         if not code:
             # Fallback: direct OpenAI call
-            resp = await self.client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": codegen_payload},
-                ],
-                temperature=0.1, max_tokens=4000,
-            )
-            code = resp.choices[0].message.content.strip()
+            try:
+                resp = await self.client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": codegen_payload},
+                    ],
+                    temperature=0.1, max_tokens=4000,
+                )
+                code = resp.choices[0].message.content.strip()
+            except Exception as e:
+                print(f"[MLE] GPT code gen fallback failed: {e}")
+                code = ""
 
         if code.startswith("```"):
             lines = code.splitlines()
